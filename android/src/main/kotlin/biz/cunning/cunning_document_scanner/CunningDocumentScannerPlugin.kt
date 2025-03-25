@@ -172,7 +172,7 @@ class CunningDocumentScannerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
      */
     private fun startScan(useFallback: Boolean, noOfPages: Int, isGalleryImportAllowed: Boolean) {
         if (useFallback) {
-            startFallback()
+            startFallback(noOfPages)
             return
         }
 
@@ -193,7 +193,7 @@ class CunningDocumentScannerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
             }
         }.addOnFailureListener {
             if (it is MlKitException) {
-                startFallback()
+                startFallback(noOfPages)
             } else {
                 pendingResult?.error("ERROR", "Failed to start document scanner Intent", null)
             }
