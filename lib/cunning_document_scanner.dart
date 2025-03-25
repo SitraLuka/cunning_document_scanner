@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -13,6 +14,7 @@ class CunningDocumentScanner {
 
   /// Call this to start get Picture workflow.
   static Future<List<String>?> getPictures({
+    bool useFallback = false,
     int noOfPages = 100,
     bool isGalleryImportAllowed = false,
     IosScannerOptions? iosScannerOptions,
@@ -26,6 +28,7 @@ class CunningDocumentScanner {
     }
 
     final List<dynamic>? pictures = await _channel.invokeMethod('getPictures', {
+      if (Platform.isAndroid) 'useFallback': useFallback,
       'noOfPages': noOfPages,
       'isGalleryImportAllowed': isGalleryImportAllowed,
       if (iosScannerOptions != null)

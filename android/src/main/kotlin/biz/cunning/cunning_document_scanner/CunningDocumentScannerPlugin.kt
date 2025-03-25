@@ -46,10 +46,11 @@ class CunningDocumentScannerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
 
     override fun onMethodCall(call: MethodCall, result: Result) {
         if (call.method == "getPictures") {
+            val useFallback = call.argument<Boolean>("useFallback") ?: false
             val noOfPages = call.argument<Int>("noOfPages") ?: 50;
             val isGalleryImportAllowed = call.argument<Boolean>("isGalleryImportAllowed") ?: false;
             this.pendingResult = result
-            startScan(noOfPages, isGalleryImportAllowed)
+            startScan(useFallback, noOfPages, isGalleryImportAllowed)
         } else {
             result.notImplemented()
         }
@@ -169,7 +170,12 @@ class CunningDocumentScannerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
     /**
      * add document scanner result handler and launch the document scanner
      */
-    private fun startScan(noOfPages: Int, isGalleryImportAllowed: Boolean) {
+    private fun startScan(useFallback: Boolean, noOfPages: Int, isGalleryImportAllowed: Boolean) {
+        if (useFallback) {
+            startFallback()
+            return
+        }
+
         val options = GmsDocumentScannerOptions.Builder()
             .setGalleryImportAllowed(isGalleryImportAllowed)
             .setPageLimit(noOfPages)
@@ -187,20 +193,24 @@ class CunningDocumentScannerPlugin : FlutterPlugin, MethodCallHandler, ActivityA
             }
         }.addOnFailureListener {
             if (it is MlKitException) {
-                val intent = createDocumentScanIntent(noOfPages)
-                try {
-                    ActivityCompat.startActivityForResult(
-                        this.activity,
-                        intent,
-                        START_DOCUMENT_FB_ACTIVITY,
-                        null
-                    )
-                } catch (e: ActivityNotFoundException) {
-                    pendingResult?.error("ERROR", "FAILED TO START ACTIVITY", null)
-                }
+                startFallback()
             } else {
                 pendingResult?.error("ERROR", "Failed to start document scanner Intent", null)
             }
+        }
+    }
+
+    private fun startFallback(noOfPages: Int) {
+        val intent = createDocumentScanIntent(noOfPages)
+        try {
+            ActivityCompat.startActivityForResult(
+                this.activity,
+                intent,
+                START_DOCUMENT_FB_ACTIVITY,
+                null
+            )
+        } catch (e: ActivityNotFoundException) {
+            pendingResult?.error("ERROR", "FAILED TO START ACTIVITY", null)
         }
     }
 
